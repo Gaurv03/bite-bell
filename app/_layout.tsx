@@ -1,24 +1,36 @@
+import { Slot } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import * as SplashScreen from 'expo-splash-screen';
+import { useColorScheme } from 'react-native';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { useState, useEffect } from 'react';
+import { ThemeContext } from '@/context/ThemeContext';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+export default function TabLayout() {
+  const systemColorScheme = useColorScheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    systemColorScheme === 'dark' ? 'dark' : 'light'
+  );
+
+  useEffect(() => {
+    if (systemColorScheme === 'light' || systemColorScheme === 'dark') {
+      setTheme(systemColorScheme);
+    }
+  }, [systemColorScheme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <ThemeProvider value={theme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AnimatedSplashOverlay />
+        <Slot />
+      </ThemeProvider>
+    </ThemeContext.Provider>
   );
 }
