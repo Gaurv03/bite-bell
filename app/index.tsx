@@ -1,8 +1,12 @@
 import { FloatingEmojis } from '@/components/FloatingEmojis';
 import { useAppTheme } from '@/context/ThemeContext';
-import { createAudioPlayer } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
+import 'lucide-react-native';
+import { Check, Play, Square } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
@@ -64,6 +68,15 @@ export default function App() {
   const [previewingTone, setPreviewingTone] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const durationEndTimeRef = useRef<number>(0);
+  const nextIntervalTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    setAudioModeAsync({
+      shouldPlayInBackground: true,
+      playsInSilentMode: true,
+    });
+  }, []);
 
   const isDark = theme === 'dark';
 
@@ -102,6 +115,11 @@ export default function App() {
       const newSound = createAudioPlayer(soundSource);
       soundRef.current = newSound;
       newSound.play();
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setTimeout(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }, 150);
 
       if (overrideSoundName) {
         setPreviewingTone(overrideSoundName);
@@ -145,6 +163,14 @@ export default function App() {
 
     setDurationSeconds(totalDuration);
     setIntervalSeconds(intervalDuration);
+    durationEndTimeRef.current = Date.now() + totalDuration * 1000;
+    nextIntervalTimeRef.current = Date.now() + intervalDuration * 1000;
+    setIsRunning(true);
+  };
+
+  const resumeTimer = () => {
+    durationEndTimeRef.current = Date.now() + durationSeconds * 1000;
+    nextIntervalTimeRef.current = Date.now() + intervalSeconds * 1000;
     setIsRunning(true);
   };
 
@@ -164,25 +190,41 @@ export default function App() {
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setInterval(() => {
-        setDurationSeconds((prevDuration) => {
-          if (prevDuration <= 1) {
-            playSound();
-            stopTimer();
-            return 0;
-          }
-          return prevDuration - 1;
-        });
+        const now = Date.now();
+        const remainingDuration = Math.max(
+          0,
+          Math.ceil((durationEndTimeRef.current - now) / 1000),
+        );
+        let remainingInterval = Math.max(
+          0,
+          Math.ceil((nextIntervalTimeRef.current - now) / 1000),
+        );
 
-        setIntervalSeconds((prevInterval) => {
-          if (prevInterval <= 1) {
-            playSound();
-            const originalInterval =
-              parseFloat(intervalInput) * getTimeMultiplier(intervalUnit);
-            return originalInterval;
+        if (remainingDuration <= 0) {
+          setDurationSeconds(0);
+          setIntervalSeconds(0);
+          playSound();
+          stopTimer();
+          return;
+        }
+
+        if (remainingInterval <= 0) {
+          playSound();
+          const originalIntervalMs =
+            parseFloat(intervalInput) * getTimeMultiplier(intervalUnit) * 1000;
+
+          while (nextIntervalTimeRef.current <= now) {
+            nextIntervalTimeRef.current += originalIntervalMs;
           }
-          return prevInterval - 1;
-        });
-      }, 1000);
+          remainingInterval = Math.max(
+            0,
+            Math.ceil((nextIntervalTimeRef.current - now) / 1000),
+          );
+        }
+
+        setDurationSeconds(remainingDuration);
+        setIntervalSeconds(remainingInterval);
+      }, 250);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -278,198 +320,221 @@ export default function App() {
           >
             {/* Header */}
             <View style={styles.header}>
-          <View style={styles.headerTitleRow}>
-            <Image
-              source={require('@/assets/images/icon.png')}
-              style={styles.logoImage}
-            />
-            <View>
-              <Text style={[styles.appTitle, { color: themeColors.text }]}>
-                Bite Bells
-              </Text>
-              <Text
-                style={[styles.appSubtitle, { color: themeColors.subtext }]}
-              >
-                Mindful eating tracker
-              </Text>
-            </View>
-          </View>
-          <View style={styles.themeToggle}>
-            <TouchableOpacity
-              onPress={() => setSettingsVisible(true)}
-              style={styles.iconButton}
-            >
-              <Text style={{ fontSize: 24 }}>⚙️</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={toggleTheme} style={styles.iconButton}>
-              <Text style={{ fontSize: 24 }}>{isDark ? '🌙' : '☀️'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <View
-            style={[
-              styles.aestheticCard,
-              {
-                backgroundColor: themeColors.card,
-                boxShadow: `0px 24px 32px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(209,213,219,0.5)'}`,
-              },
-            ]}
-          >
-            {!isRunning && durationSeconds === 0 ? (
-              <View style={styles.setupContainer}>
-                <Text
-                  style={[styles.sectionTitle, { color: themeColors.text }]}
-                >
-                  Configure Routine
-                </Text>
-                <Text
-                  style={[
-                    styles.sectionSubtitle,
-                    { color: themeColors.subtext },
-                  ]}
-                >
-                  Set your total meal time and how often you'd like to be
-                  reminded to chew.
-                </Text>
-
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { color: themeColors.text }]}>
-                    Total Duration
+              <View style={styles.headerTitleRow}>
+                <Image
+                  source={require('@/assets/images/icon.png')}
+                  style={styles.logoImage}
+                />
+                <View>
+                  <Text style={[styles.appTitle, { color: themeColors.text }]}>
+                    Bite Bells
                   </Text>
-                  <View style={styles.inputRow}>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputFlex,
-                        {
-                          color: themeColors.text,
-                          borderColor: themeColors.inputBorder,
-                          backgroundColor: themeColors.inputBg,
-                        },
-                      ]}
-                      keyboardType="numeric"
-                      value={durationInput}
-                      onChangeText={setDurationInput}
-                      placeholder="e.g. 40"
-                      placeholderTextColor={themeColors.subtext}
-                    />
-                    <UnitSelector
-                      selected={durationUnit}
-                      onSelect={setDurationUnit}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { color: themeColors.text }]}>
-                    Bite Interval
+                  <Text
+                    style={[styles.appSubtitle, { color: themeColors.subtext }]}
+                  >
+                    Mindful eating tracker
                   </Text>
-                  <View style={styles.inputRow}>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputFlex,
-                        {
-                          color: themeColors.text,
-                          borderColor: themeColors.inputBorder,
-                          backgroundColor: themeColors.inputBg,
-                        },
-                      ]}
-                      keyboardType="numeric"
-                      value={intervalInput}
-                      onChangeText={setIntervalInput}
-                      placeholder="e.g. 1"
-                      placeholderTextColor={themeColors.subtext}
-                    />
-                    <UnitSelector
-                      selected={intervalUnit}
-                      onSelect={setIntervalUnit}
-                    />
-                  </View>
                 </View>
-
+              </View>
+              <View style={styles.themeToggle}>
                 <TouchableOpacity
-                  style={[
-                    styles.button,
-                    { backgroundColor: themeColors.primary },
-                  ]}
-                  onPress={startTimer}
-                  activeOpacity={0.8}
+                  onPress={() => setSettingsVisible(true)}
+                  style={styles.iconButton}
                 >
-                  <Text style={styles.buttonText}>Start Mindful Eating</Text>
+                  <Text style={{ fontSize: 24 }}>⚙️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={styles.iconButton}
+                >
+                  <Text style={{ fontSize: 24 }}>{isDark ? '🌙' : '☀️'}</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.activeContainer}>
-                <View style={styles.timerBox}>
-                  <Text
-                    style={[styles.activeLabel, { color: themeColors.subtext }]}
-                  >
-                    Total Time Remaining
-                  </Text>
-                  <Text
-                    style={[styles.durationText, { color: themeColors.text }]}
-                  >
-                    {formatTime(durationSeconds)}
-                  </Text>
-                </View>
+            </View>
 
-                <View style={styles.divider} />
-
-                <View style={styles.timerBox}>
-                  <Text
-                    style={[styles.activeLabel, { color: themeColors.subtext }]}
-                  >
-                    Next Bell In
-                  </Text>
-                  <Text
-                    style={[
-                      styles.intervalText,
-                      { color: themeColors.secondary },
-                    ]}
-                  >
-                    {formatTime(intervalSeconds)}
-                  </Text>
-                </View>
-
-                <View style={styles.controlsRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.controlButton,
-                      {
-                        backgroundColor: isRunning
-                          ? '#F59E0B'
-                          : themeColors.secondary,
-                      },
-                    ]}
-                    onPress={() =>
-                      isRunning ? stopTimer() : setIsRunning(true)
-                    }
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.buttonText}>
-                      {isRunning ? 'Pause' : 'Resume'}
+            <View style={styles.content}>
+              <BlurView
+                intensity={isDark ? 30 : 60}
+                tint={isDark ? 'dark' : 'light'}
+                style={[
+                  styles.aestheticCard,
+                  {
+                    overflow: 'hidden',
+                    borderColor: isDark
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'rgba(255,255,255,0.4)',
+                    borderWidth: 1,
+                    backgroundColor: isDark
+                      ? 'rgba(30,30,30,0.5)'
+                      : 'rgba(255,255,255,0.5)',
+                    boxShadow: `0px 24px 32px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(209,213,219,0.5)'}`,
+                  },
+                ]}
+              >
+                {!isRunning && durationSeconds === 0 ? (
+                  <View style={styles.setupContainer}>
+                    <Text
+                      style={[styles.sectionTitle, { color: themeColors.text }]}
+                    >
+                      Configure Routine
                     </Text>
-                  </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.sectionSubtitle,
+                        { color: themeColors.subtext },
+                      ]}
+                    >
+                      Set your total meal time and how often you'd like to be
+                      reminded to chew.
+                    </Text>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.controlButton,
-                      { backgroundColor: themeColors.danger },
-                    ]}
-                    onPress={resetTimer}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.buttonText}>Reset</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-        </ScrollView>
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.label, { color: themeColors.text }]}>
+                        Total Duration
+                      </Text>
+                      <View style={styles.inputRow}>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputFlex,
+                            {
+                              color: themeColors.text,
+                              borderColor: themeColors.inputBorder,
+                              backgroundColor: themeColors.inputBg,
+                            },
+                          ]}
+                          keyboardType="numeric"
+                          value={durationInput}
+                          onChangeText={setDurationInput}
+                          placeholder="e.g. 40"
+                          placeholderTextColor={themeColors.subtext}
+                        />
+                        <UnitSelector
+                          selected={durationUnit}
+                          onSelect={setDurationUnit}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.label, { color: themeColors.text }]}>
+                        Bite Interval
+                      </Text>
+                      <View style={styles.inputRow}>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputFlex,
+                            {
+                              color: themeColors.text,
+                              borderColor: themeColors.inputBorder,
+                              backgroundColor: themeColors.inputBg,
+                            },
+                          ]}
+                          keyboardType="numeric"
+                          value={intervalInput}
+                          onChangeText={setIntervalInput}
+                          placeholder="e.g. 1"
+                          placeholderTextColor={themeColors.subtext}
+                        />
+                        <UnitSelector
+                          selected={intervalUnit}
+                          onSelect={setIntervalUnit}
+                        />
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        { backgroundColor: themeColors.primary },
+                      ]}
+                      onPress={startTimer}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.buttonText}>
+                        Start Mindful Eating
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.activeContainer}>
+                    <View style={styles.timerBox}>
+                      <Text
+                        style={[
+                          styles.activeLabel,
+                          { color: themeColors.subtext },
+                        ]}
+                      >
+                        Total Time Remaining
+                      </Text>
+                      <Text
+                        style={[
+                          styles.durationText,
+                          { color: themeColors.text },
+                        ]}
+                      >
+                        {formatTime(durationSeconds)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.timerBox}>
+                      <Text
+                        style={[
+                          styles.activeLabel,
+                          { color: themeColors.subtext },
+                        ]}
+                      >
+                        Next Bell In
+                      </Text>
+                      <Text
+                        style={[
+                          styles.intervalText,
+                          { color: themeColors.secondary },
+                        ]}
+                      >
+                        {formatTime(intervalSeconds)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.controlsRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.controlButton,
+                          {
+                            backgroundColor: isRunning
+                              ? '#F59E0B'
+                              : themeColors.secondary,
+                          },
+                        ]}
+                        onPress={() =>
+                          isRunning ? stopTimer() : resumeTimer()
+                        }
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.buttonText}>
+                          {isRunning ? 'Pause' : 'Resume'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.controlButton,
+                          { backgroundColor: themeColors.danger },
+                        ]}
+                        onPress={resetTimer}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.buttonText}>Reset</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </BlurView>
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -513,12 +578,17 @@ export default function App() {
                 const isSelected = selectedRingtone === tone;
                 const isPreviewing = previewingTone === tone;
                 return (
-                  <View
+                  <TouchableOpacity
                     key={tone}
+                    onPress={() => setSelectedRingtone(tone)}
+                    activeOpacity={0.7}
                     style={[
                       styles.ringtoneItem,
                       { borderBottomColor: themeColors.inputBorder },
-                      isSelected && { backgroundColor: themeColors.inputBg },
+                      isSelected && {
+                        backgroundColor: themeColors.inputBg,
+                        borderRadius: 12,
+                      },
                     ]}
                   >
                     <View style={styles.ringtoneLeft}>
@@ -531,6 +601,7 @@ export default function App() {
                               : themeColors.primary,
                           },
                         ]}
+                        activeOpacity={0.8}
                         onPress={() => {
                           if (isPreviewing) {
                             stopPreview();
@@ -542,11 +613,13 @@ export default function App() {
                         <Text
                           style={{
                             color: '#fff',
-                            fontSize: 12,
-                            fontWeight: 'bold',
+                            fontSize: 16,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                           }}
                         >
-                          {isPreviewing ? '⏹ STOP' : '▶ PLAY'}
+                          {isPreviewing ? <Square /> : <Play />}
                         </Text>
                       </TouchableOpacity>
                       <Text
@@ -562,29 +635,18 @@ export default function App() {
                         {tone}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.selectButton,
-                        {
-                          borderColor: isSelected
-                            ? themeColors.primary
-                            : themeColors.inputBorder,
-                        },
-                      ]}
-                      onPress={() => setSelectedRingtone(tone)}
-                    >
+                    {isSelected && (
                       <Text
                         style={{
-                          color: isSelected
-                            ? themeColors.primary
-                            : themeColors.subtext,
-                          fontWeight: '600',
+                          color: themeColors.primary,
+                          fontSize: 18,
+                          fontWeight: 'bold',
                         }}
                       >
-                        {isSelected ? 'SELECTED' : 'SELECT'}
+                        <Check />
                       </Text>
-                    </TouchableOpacity>
-                  </View>
+                    )}
+                  </TouchableOpacity>
                 );
               })}
             </ScrollView>
@@ -655,6 +717,10 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 32,
     elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   setupContainer: {
     gap: 24,
@@ -810,27 +876,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 4,
   },
   ringtoneLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   previewButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    minWidth: 70,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  selectButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1.5,
   },
   ringtoneText: {
     fontSize: 16,

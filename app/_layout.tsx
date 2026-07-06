@@ -40,3 +40,5 @@ export default function TabLayout() {
 }
 
 // npx eas-cli build -p android --profile preview
+// cd android  && ./gradlew assembleDebug
+// npx expo run:android

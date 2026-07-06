@@ -90,7 +90,7 @@ const FloatingEmoji = ({ emoji }: { emoji: string }) => {
         { rotate: `${rotation.value}deg` },
         { scale: scale.value },
       ],
-      opacity: 0.12, // Subtle opacity
+      opacity: 0.5, // Subtle opacity
     };
   });
 
