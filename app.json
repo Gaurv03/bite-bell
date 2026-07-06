@@ -4,7 +4,7 @@
     "slug": "bite-bells",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.jpg",
+    "icon": "./assets/images/icon.png",
     "scheme": "bitebells",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -14,14 +14,18 @@
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#121212",
-        "foregroundImage": "./assets/images/icon.jpg"
+        "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.bitebells"
+      "package": "com.anonymous.bitebells",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.jpg"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -29,11 +33,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.jpg",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -42,7 +47,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a6cae063-b63c-4387-a002-6b875221dd1a"
+        "projectId": "db03a6f3-ec5c-43f6-9261-ad6956a5c4fa"
       }
     }
   }

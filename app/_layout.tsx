@@ -1,18 +1,22 @@
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from '@react-navigation/native';
 import { Slot } from 'expo-router';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { useState, useEffect } from 'react';
 import { ThemeContext } from '@/context/ThemeContext';
+import { useEffect, useState } from 'react';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const systemColorScheme = useColorScheme();
   const [theme, setTheme] = useState<'light' | 'dark'>(
-    systemColorScheme === 'dark' ? 'dark' : 'light'
+    systemColorScheme === 'dark' ? 'dark' : 'light',
   );
 
   useEffect(() => {
@@ -22,7 +26,7 @@ export default function TabLayout() {
   }, [systemColorScheme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -34,3 +38,5 @@ export default function TabLayout() {
     </ThemeContext.Provider>
   );
 }
+
+// npx eas-cli build -p android --profile preview

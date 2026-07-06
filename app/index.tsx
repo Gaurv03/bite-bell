@@ -280,7 +280,7 @@ export default function App() {
             <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Image
-              source={require('@/assets/images/icon.jpg')}
+              source={require('@/assets/images/icon.png')}
               style={styles.logoImage}
             />
             <View>
