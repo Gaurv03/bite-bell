@@ -4,6 +4,8 @@ import type { AudioPlayer } from 'expo-audio';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useKeepAwake } from 'expo-keep-awake';
+import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import 'lucide-react-native';
 import { Check, Play, Square } from 'lucide-react-native';
@@ -22,6 +24,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppState } from 'react-native';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: AppState.currentState !== 'active',
+    shouldSetBadge: false,
+    shouldShowBanner: AppState.currentState !== 'active',
+    shouldShowList: AppState.currentState !== 'active',
+  }),
+});
+
 const RINGTONES: Record<string, any> = {
   'Alert Alarm': require('@/assets/rings/mixkit-alert-alarm-1005.wav'),
   'Classic Alarm': require('@/assets/rings/mixkit-classic-alarm-995.wav'),
@@ -39,6 +52,23 @@ const RINGTONES: Record<string, any> = {
   'Slow Racing Countdown': require('@/assets/rings/mixkit-slow-racing-countdown-1055.wav'),
 };
 
+const RINGTONE_FILENAMES: Record<string, string> = {
+  'Alert Alarm': 'mixkit-alert-alarm-1005.wav',
+  'Classic Alarm': 'mixkit-classic-alarm-995.wav',
+  'Crystal Chime': 'mixkit-crystal-chime-3108.wav',
+  'Facility Alarm': 'mixkit-facility-alarm-sound-999.wav',
+  'Hint Notification': 'mixkit-interface-hint-notification-911.wav',
+  Applause: 'mixkit-medium-size-crowd-applause-485.wav',
+  'Page Back Chime': 'mixkit-page-back-chime-1108.wav',
+  'Page Forward Chime': 'mixkit-page-forward-single-chime-1107.wav',
+  'Race Countdown': 'mixkit-race-countdown-1953.wav',
+  'Relaxing Bell': 'mixkit-relaxing-bell-chime-3109.wav',
+  'Sci-Fi Alarm': 'mixkit-scanning-sci-fi-alarm-905.wav',
+  'Casino Counter': 'mixkit-score-casino-counter-1998.wav',
+  'Slot Machine Payout': 'mixkit-slot-machine-payout-alarm-1996.wav',
+  'Slow Racing Countdown': 'mixkit-slow-racing-countdown-1055.wav',
+};
+
 type TimeUnit = 'seconds' | 'minutes' | 'hours';
 
 const getTimeMultiplier = (unit: TimeUnit) => {
@@ -48,6 +78,7 @@ const getTimeMultiplier = (unit: TimeUnit) => {
 };
 
 export default function App() {
+  useKeepAwake();
   const { theme, toggleTheme } = useAppTheme();
 
   const [durationInput, setDurationInput] = useState('40');
@@ -61,6 +92,7 @@ export default function App() {
 
   const [isRunning, setIsRunning] = useState(false);
   const soundRef = useRef<AudioPlayer | null>(null);
+  const silentPlayerRef = useRef<AudioPlayer | null>(null);
 
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [selectedRingtone, setSelectedRingtone] =
@@ -75,23 +107,27 @@ export default function App() {
     setAudioModeAsync({
       shouldPlayInBackground: true,
       playsInSilentMode: true,
+      interruptionMode: 'mixWithOthers',
     });
+
+    // Request notification permissions for background alarms
+    Notifications.requestPermissionsAsync();
   }, []);
 
   const isDark = theme === 'dark';
 
   const themeColors = {
-    background: isDark ? '#121212' : '#F2F4F7',
-    card: isDark ? '#1E1E1E' : '#FFFFFF',
-    text: isDark ? '#F9FAFB' : '#111827',
-    subtext: isDark ? '#9CA3AF' : '#6B7280',
-    primary: '#4F46E5', // Indigo
-    primaryHover: '#4338CA',
-    secondary: '#10B981', // Emerald
-    danger: '#EF4444', // Red
-    inputBorder: isDark ? '#374151' : '#E5E7EB',
-    inputBg: isDark ? '#111827' : '#F9FAFB',
-    shadow: isDark ? '#000000' : '#D1D5DB',
+    background: isDark ? '#0F172A' : '#F0F4F8',
+    card: isDark ? '#1E293B' : '#FFFFFF',
+    text: isDark ? '#F8FAFC' : '#0F172A',
+    subtext: isDark ? '#94A3B8' : '#475569',
+    primary: '#2A4B9B',
+    primaryHover: '#1E3A8A',
+    secondary: '#FACC15',
+    danger: '#EF4444',
+    inputBorder: isDark ? '#334155' : '#E2E8F0',
+    inputBg: isDark ? '#0F172A' : '#F8FAFC',
+    shadow: isDark ? '#000000' : '#94A3B8',
   };
 
   useEffect(() => {
@@ -100,8 +136,29 @@ export default function App() {
         soundRef.current.pause();
         soundRef.current.remove();
       }
+      if (silentPlayerRef.current) {
+        silentPlayerRef.current.pause();
+        silentPlayerRef.current.remove();
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (isRunning) {
+      if (!silentPlayerRef.current) {
+        // Initialize a silent looping track to keep the JS thread alive in the background
+        const silentSound = createAudioPlayer(RINGTONES['Crystal Chime']);
+        silentSound.volume = 0;
+        silentSound.loop = true;
+        silentPlayerRef.current = silentSound;
+      }
+      silentPlayerRef.current.play();
+    } else {
+      if (silentPlayerRef.current) {
+        silentPlayerRef.current.pause();
+      }
+    }
+  }, [isRunning]);
 
   const playSound = async (overrideSoundName?: string) => {
     try {
@@ -145,6 +202,51 @@ export default function App() {
     } catch (e) {}
   };
 
+  const scheduleAlarms = async (
+    durationSecs: number,
+    originalIntervalSecs: number,
+    nextIntervalMs: number,
+  ) => {
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+
+      const soundFile =
+        RINGTONE_FILENAMES[selectedRingtone] || 'mixkit-crystal-chime-3108.wav';
+      const channelId = `bite-bells-${soundFile}`;
+
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync(channelId, {
+          name: `Bite Bells - ${selectedRingtone}`,
+          importance: Notifications.AndroidImportance.HIGH,
+          sound: soundFile,
+        });
+      }
+
+      const firstIntervalSecs = Math.max(1, Math.ceil(nextIntervalMs / 1000));
+      let timeAccumulated = firstIntervalSecs;
+
+      let count = 0;
+      while (timeAccumulated <= durationSecs && count < 64) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Bite Bells',
+            body: 'Time to chew! 🍽️',
+            sound: soundFile,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: timeAccumulated,
+            channelId: channelId,
+          },
+        });
+        timeAccumulated += originalIntervalSecs;
+        count++;
+      }
+    } catch (e) {
+      console.log('Error scheduling notifications', e);
+    }
+  };
+
   const startTimer = () => {
     const totalDuration =
       parseFloat(durationInput) * getTimeMultiplier(durationUnit);
@@ -166,12 +268,21 @@ export default function App() {
     durationEndTimeRef.current = Date.now() + totalDuration * 1000;
     nextIntervalTimeRef.current = Date.now() + intervalDuration * 1000;
     setIsRunning(true);
+    scheduleAlarms(totalDuration, intervalDuration, intervalDuration * 1000);
   };
 
   const resumeTimer = () => {
     durationEndTimeRef.current = Date.now() + durationSeconds * 1000;
     nextIntervalTimeRef.current = Date.now() + intervalSeconds * 1000;
     setIsRunning(true);
+
+    const originalIntervalSecs =
+      parseFloat(intervalInput) * getTimeMultiplier(intervalUnit);
+    scheduleAlarms(
+      durationSeconds,
+      originalIntervalSecs,
+      intervalSeconds * 1000,
+    );
   };
 
   const stopTimer = () => {
@@ -179,6 +290,7 @@ export default function App() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
+    Notifications.cancelAllScheduledNotificationsAsync().catch(console.log);
   };
 
   const resetTimer = () => {
@@ -325,16 +437,6 @@ export default function App() {
                   source={require('@/assets/images/icon.png')}
                   style={styles.logoImage}
                 />
-                <View>
-                  <Text style={[styles.appTitle, { color: themeColors.text }]}>
-                    Bite Bells
-                  </Text>
-                  <Text
-                    style={[styles.appSubtitle, { color: themeColors.subtext }]}
-                  >
-                    Mindful eating tracker
-                  </Text>
-                </View>
               </View>
               <View style={styles.themeToggle}>
                 <TouchableOpacity
@@ -354,7 +456,7 @@ export default function App() {
 
             <View style={styles.content}>
               <BlurView
-                intensity={isDark ? 30 : 60}
+                intensity={isDark ? 30 : 20}
                 tint={isDark ? 'dark' : 'light'}
                 style={[
                   styles.aestheticCard,
@@ -362,17 +464,24 @@ export default function App() {
                     overflow: 'hidden',
                     borderColor: isDark
                       ? 'rgba(255,255,255,0.1)'
-                      : 'rgba(255,255,255,0.4)',
+                      : 'rgba(255,255,255,0.3)',
                     borderWidth: 1,
                     backgroundColor: isDark
                       ? 'rgba(30,30,30,0.5)'
-                      : 'rgba(255,255,255,0.5)',
-                    boxShadow: `0px 24px 32px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(209,213,219,0.5)'}`,
+                      : 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: `0px 24px 32px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0, 0, 0, 0.1)'}`,
                   },
                 ]}
               >
                 {!isRunning && durationSeconds === 0 ? (
-                  <View style={styles.setupContainer}>
+                  <View
+                    style={[
+                      styles.setupContainer,
+                      {
+                        backgroundColor: 'transparent',
+                      },
+                    ]}
+                  >
                     <Text
                       style={[styles.sectionTitle, { color: themeColors.text }]}
                     >
@@ -619,7 +728,11 @@ export default function App() {
                             alignItems: 'center',
                           }}
                         >
-                          {isPreviewing ? <Square /> : <Play />}
+                          {isPreviewing ? (
+                            <Square color={'#fff'} size={16} />
+                          ) : (
+                            <Play color={'#fff'} size={16} />
+                          )}
                         </Text>
                       </TouchableOpacity>
                       <Text
@@ -627,7 +740,9 @@ export default function App() {
                           styles.ringtoneText,
                           { color: themeColors.text },
                           isSelected && {
-                            color: themeColors.primary,
+                            color: isDark
+                              ? 'rgba(255,255,255,0.8)'
+                              : themeColors.primary,
                             fontWeight: '700',
                           },
                         ]}
@@ -643,7 +758,11 @@ export default function App() {
                           fontWeight: 'bold',
                         }}
                       >
-                        <Check />
+                        <Check
+                          color={isDark ? '#fff' : '#000'}
+                          size={18}
+                          strokeWidth={3}
+                        />
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -716,11 +835,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 32,
     padding: 32,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
   },
   setupContainer: {
     gap: 24,

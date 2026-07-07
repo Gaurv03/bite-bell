@@ -8,7 +8,10 @@
     "scheme": "bitebells",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -20,7 +23,10 @@
       "package": "com.anonymous.bitebells",
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.WAKE_LOCK",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
     },
     "web": {
@@ -38,7 +44,30 @@
         }
       ],
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff",
+          "sounds": [
+            "./assets/rings/mixkit-alert-alarm-1005.wav",
+            "./assets/rings/mixkit-classic-alarm-995.wav",
+            "./assets/rings/mixkit-crystal-chime-3108.wav",
+            "./assets/rings/mixkit-facility-alarm-sound-999.wav",
+            "./assets/rings/mixkit-interface-hint-notification-911.wav",
+            "./assets/rings/mixkit-medium-size-crowd-applause-485.wav",
+            "./assets/rings/mixkit-page-back-chime-1108.wav",
+            "./assets/rings/mixkit-page-forward-single-chime-1107.wav",
+            "./assets/rings/mixkit-race-countdown-1953.wav",
+            "./assets/rings/mixkit-relaxing-bell-chime-3109.wav",
+            "./assets/rings/mixkit-scanning-sci-fi-alarm-905.wav",
+            "./assets/rings/mixkit-score-casino-counter-1998.wav",
+            "./assets/rings/mixkit-slot-machine-payout-alarm-1996.wav",
+            "./assets/rings/mixkit-slow-racing-countdown-1055.wav"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

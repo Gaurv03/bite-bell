@@ -1,8 +1,8 @@
+import { useAppTheme } from '@/context/ThemeContext';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
-import { Dimensions, StyleSheet, View, Text } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, Keyframe, runOnJS } from 'react-native-reanimated';
-import { useAppTheme } from '@/context/ThemeContext';
 
 const DURATION = 2000;
 
@@ -20,14 +20,18 @@ export function AnimatedSplashOverlay() {
   });
 
   const isDark = theme === 'dark';
-  const bgColor = isDark ? '#121212' : '#F9FAFB';
-  const textColor = isDark ? '#FFFFFF' : '#111827';
-  const subTextColor = isDark ? '#9CA3AF' : '#6B7280';
+  const bgColor = isDark ? '#0F172A' : '#F0F4F8';
+  const subTextColor = isDark ? '#94A3B8' : '#475569';
 
   const content = (
     <View style={styles.contentContainer}>
-      <Text style={[styles.title, { color: textColor }]}>Bite Bells</Text>
-      <Text style={[styles.subtitle, { color: subTextColor }]}>Track every bite you chew</Text>
+      <Image
+        source={require('@/assets/images/splash-icon.png')}
+        style={styles.logoImage}
+      />
+      <Text style={[styles.subtitle, { color: subTextColor }]}>
+        Track every bite you chew
+      </Text>
     </View>
   );
 
@@ -39,7 +43,8 @@ export function AnimatedSplashOverlay() {
           runOnJS(setVisible)(false);
         }
       })}
-      style={[styles.splashOverlay, { backgroundColor: bgColor }]}>
+      style={[styles.splashOverlay, { backgroundColor: bgColor }]}
+    >
       {content}
     </Animated.View>
   ) : (
@@ -49,7 +54,8 @@ export function AnimatedSplashOverlay() {
           setAnimate(true);
         });
       }}
-      style={[styles.splashOverlay, { backgroundColor: bgColor }]}>
+      style={[styles.splashOverlay, { backgroundColor: bgColor }]}
+    >
       {content}
     </View>
   );
@@ -73,7 +79,12 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 25,
   },
+  logoImage: {
+    transform: [{ scale: 0.8 }],
+  },
+
   title: {
     fontSize: 48,
     fontWeight: '800',

@@ -9,21 +9,19 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemeContext } from '@/context/ThemeContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const systemColorScheme = useColorScheme();
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    systemColorScheme === 'dark' ? 'dark' : 'light',
-  );
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  useEffect(() => {
-    if (systemColorScheme === 'light' || systemColorScheme === 'dark') {
-      setTheme(systemColorScheme);
-    }
-  }, [systemColorScheme]);
+  // useEffect(() => {
+  //   if (systemColorScheme === 'light' || systemColorScheme === 'dark') {
+  //     setTheme(systemColorScheme);
+  //   }
+  // }, [systemColorScheme]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
@@ -41,4 +39,5 @@ export default function TabLayout() {
 
 // npx eas-cli build -p android --profile preview
 // cd android  && ./gradlew assembleDebug
+// cd android && ./gradlew assembleRelease
 // npx expo run:android
