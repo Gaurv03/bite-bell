@@ -16,7 +16,7 @@
     "android": {
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#121212",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -51,20 +51,20 @@
           "icon": "./assets/images/icon.png",
           "color": "#ffffff",
           "sounds": [
-            "./assets/rings/mixkit-alert-alarm-1005.wav",
-            "./assets/rings/mixkit-classic-alarm-995.wav",
-            "./assets/rings/mixkit-crystal-chime-3108.wav",
-            "./assets/rings/mixkit-facility-alarm-sound-999.wav",
-            "./assets/rings/mixkit-interface-hint-notification-911.wav",
-            "./assets/rings/mixkit-medium-size-crowd-applause-485.wav",
-            "./assets/rings/mixkit-page-back-chime-1108.wav",
-            "./assets/rings/mixkit-page-forward-single-chime-1107.wav",
-            "./assets/rings/mixkit-race-countdown-1953.wav",
-            "./assets/rings/mixkit-relaxing-bell-chime-3109.wav",
-            "./assets/rings/mixkit-scanning-sci-fi-alarm-905.wav",
-            "./assets/rings/mixkit-score-casino-counter-1998.wav",
-            "./assets/rings/mixkit-slot-machine-payout-alarm-1996.wav",
-            "./assets/rings/mixkit-slow-racing-countdown-1055.wav"
+            "./assets/rings/mixkit_alert_alarm_1005.wav",
+            "./assets/rings/mixkit_classic_alarm_995.wav",
+            "./assets/rings/mixkit_crystal_chime_3108.wav",
+            "./assets/rings/mixkit_facility_alarm_sound_999.wav",
+            "./assets/rings/mixkit_interface_hint_notification_911.wav",
+            "./assets/rings/mixkit_medium_size_crowd_applause_485.wav",
+            "./assets/rings/mixkit_page_back_chime_1108.wav",
+            "./assets/rings/mixkit_page_forward_single_chime_1107.wav",
+            "./assets/rings/mixkit_race_countdown_1953.wav",
+            "./assets/rings/mixkit_relaxing_bell_chime_3109.wav",
+            "./assets/rings/mixkit_scanning_sci_fi_alarm_905.wav",
+            "./assets/rings/mixkit_score_casino_counter_1998.wav",
+            "./assets/rings/mixkit_slot_machine_payout_alarm_1996.wav",
+            "./assets/rings/mixkit_slow_racing_countdown_1055.wav"
           ]
         }
       ]

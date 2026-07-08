@@ -36,37 +36,37 @@ Notifications.setNotificationHandler({
 });
 
 const RINGTONES: Record<string, any> = {
-  'Alert Alarm': require('@/assets/rings/mixkit-alert-alarm-1005.wav'),
-  'Classic Alarm': require('@/assets/rings/mixkit-classic-alarm-995.wav'),
-  'Crystal Chime': require('@/assets/rings/mixkit-crystal-chime-3108.wav'),
-  'Facility Alarm': require('@/assets/rings/mixkit-facility-alarm-sound-999.wav'),
-  'Hint Notification': require('@/assets/rings/mixkit-interface-hint-notification-911.wav'),
-  Applause: require('@/assets/rings/mixkit-medium-size-crowd-applause-485.wav'),
-  'Page Back Chime': require('@/assets/rings/mixkit-page-back-chime-1108.wav'),
-  'Page Forward Chime': require('@/assets/rings/mixkit-page-forward-single-chime-1107.wav'),
-  'Race Countdown': require('@/assets/rings/mixkit-race-countdown-1953.wav'),
-  'Relaxing Bell': require('@/assets/rings/mixkit-relaxing-bell-chime-3109.wav'),
-  'Sci-Fi Alarm': require('@/assets/rings/mixkit-scanning-sci-fi-alarm-905.wav'),
-  'Casino Counter': require('@/assets/rings/mixkit-score-casino-counter-1998.wav'),
-  'Slot Machine Payout': require('@/assets/rings/mixkit-slot-machine-payout-alarm-1996.wav'),
-  'Slow Racing Countdown': require('@/assets/rings/mixkit-slow-racing-countdown-1055.wav'),
+  'Alert Alarm': require('@/assets/rings/mixkit_alert_alarm_1005.wav'),
+  'Classic Alarm': require('@/assets/rings/mixkit_classic_alarm_995.wav'),
+  'Crystal Chime': require('@/assets/rings/mixkit_crystal_chime_3108.wav'),
+  'Facility Alarm': require('@/assets/rings/mixkit_facility_alarm_sound_999.wav'),
+  'Hint Notification': require('@/assets/rings/mixkit_interface_hint_notification_911.wav'),
+  Applause: require('@/assets/rings/mixkit_medium_size_crowd_applause_485.wav'),
+  'Page Back Chime': require('@/assets/rings/mixkit_page_back_chime_1108.wav'),
+  'Page Forward Chime': require('@/assets/rings/mixkit_page_forward_single_chime_1107.wav'),
+  'Race Countdown': require('@/assets/rings/mixkit_race_countdown_1953.wav'),
+  'Relaxing Bell': require('@/assets/rings/mixkit_relaxing_bell_chime_3109.wav'),
+  'Sci-Fi Alarm': require('@/assets/rings/mixkit_scanning_sci_fi_alarm_905.wav'),
+  'Casino Counter': require('@/assets/rings/mixkit_score_casino_counter_1998.wav'),
+  'Slot Machine Payout': require('@/assets/rings/mixkit_slot_machine_payout_alarm_1996.wav'),
+  'Slow Racing Countdown': require('@/assets/rings/mixkit_slow_racing_countdown_1055.wav'),
 };
 
 const RINGTONE_FILENAMES: Record<string, string> = {
-  'Alert Alarm': 'mixkit-alert-alarm-1005.wav',
-  'Classic Alarm': 'mixkit-classic-alarm-995.wav',
-  'Crystal Chime': 'mixkit-crystal-chime-3108.wav',
-  'Facility Alarm': 'mixkit-facility-alarm-sound-999.wav',
-  'Hint Notification': 'mixkit-interface-hint-notification-911.wav',
-  Applause: 'mixkit-medium-size-crowd-applause-485.wav',
-  'Page Back Chime': 'mixkit-page-back-chime-1108.wav',
-  'Page Forward Chime': 'mixkit-page-forward-single-chime-1107.wav',
-  'Race Countdown': 'mixkit-race-countdown-1953.wav',
-  'Relaxing Bell': 'mixkit-relaxing-bell-chime-3109.wav',
-  'Sci-Fi Alarm': 'mixkit-scanning-sci-fi-alarm-905.wav',
-  'Casino Counter': 'mixkit-score-casino-counter-1998.wav',
-  'Slot Machine Payout': 'mixkit-slot-machine-payout-alarm-1996.wav',
-  'Slow Racing Countdown': 'mixkit-slow-racing-countdown-1055.wav',
+  'Alert Alarm': 'mixkit_alert_alarm_1005.wav',
+  'Classic Alarm': 'mixkit_classic_alarm_995.wav',
+  'Crystal Chime': 'mixkit_crystal_chime_3108.wav',
+  'Facility Alarm': 'mixkit_facility_alarm_sound_999.wav',
+  'Hint Notification': 'mixkit_interface_hint_notification_911.wav',
+  Applause: 'mixkit_medium_size_crowd_applause_485.wav',
+  'Page Back Chime': 'mixkit_page_back_chime_1108.wav',
+  'Page Forward Chime': 'mixkit_page_forward_single_chime_1107.wav',
+  'Race Countdown': 'mixkit_race_countdown_1953.wav',
+  'Relaxing Bell': 'mixkit_relaxing_bell_chime_3109.wav',
+  'Sci-Fi Alarm': 'mixkit_scanning_sci_fi_alarm_905.wav',
+  'Casino Counter': 'mixkit_score_casino_counter_1998.wav',
+  'Slot Machine Payout': 'mixkit_slot_machine_payout_alarm_1996.wav',
+  'Slow Racing Countdown': 'mixkit_slow_racing_countdown_1055.wav',
 };
 
 type TimeUnit = 'seconds' | 'minutes' | 'hours';
@@ -211,7 +211,7 @@ export default function App() {
       await Notifications.cancelAllScheduledNotificationsAsync();
 
       const soundFile =
-        RINGTONE_FILENAMES[selectedRingtone] || 'mixkit-crystal-chime-3108.wav';
+        RINGTONE_FILENAMES[selectedRingtone] || 'mixkit_crystal_chime_3108.wav';
       const channelId = `bite-bells-${soundFile}`;
 
       if (Platform.OS === 'android') {
